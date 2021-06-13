@@ -1,26 +1,28 @@
-import { Component, OnInit, EventEmitter, Output, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, EventEmitter, Output } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
+import { Store } from '@ngrx/store';
+
+import * as fromRoot from '../../app.reducer'; 
 
 @Component({
   selector: 'app-sidevav-list',
   templateUrl: './sidevav.component.html',
   styleUrls: ['./sidevav.component.scss']
 })
-export class SidevavComponent implements OnInit, OnDestroy {
+export class SidevavComponent implements OnInit {
 
   @Output() closeSidenav = new EventEmitter<void>();
-  isAuth = false;
+  isAuth$: Observable<boolean>;
   authSubscription: Subscription
 
   constructor(
-    private _authService: AuthService
+    private _authService: AuthService,
+    private store: Store<fromRoot.State>
   ) { }
 
   ngOnInit(): void {
-    this.authSubscription = this._authService.authChange.subscribe(authStatus => {
-      this.isAuth = authStatus;
-    })
+    this.isAuth$ = this.store.select(fromRoot.getIsAuth);
   }
 
   onClose() {
@@ -30,10 +32,6 @@ export class SidevavComponent implements OnInit, OnDestroy {
   onLogOut() {
     this.onClose();
     this._authService.logout();
-  }
-
-  ngOnDestroy() {
-    this.authSubscription.unsubscribe();
   }
 
 }

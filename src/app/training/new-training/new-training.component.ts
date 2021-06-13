@@ -1,10 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { UIService } from 'src/app/shared/ui.service';
+import { Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
 
 import { Excercise } from '../excecise.model';
 import { TrainingService } from '../training.service';
+import * as fromTraining from '../training.reducer';
+import * as fromRoot from '../../app.reducer';
 
 
 @Component({
@@ -12,24 +14,18 @@ import { TrainingService } from '../training.service';
   templateUrl: './new-training.component.html',
   styleUrls: ['./new-training.component.scss']
 })
-export class NewTrainingComponent implements OnInit, OnDestroy {
+export class NewTrainingComponent implements OnInit {
 
-  excercises: Excercise[];
-  isLoading = true;
-  private exerciseSubvscription: Subscription;
-  private loadingSubscription: Subscription
+  excercises$: Observable<Excercise[]>;
+  isLoading$: Observable<boolean>;
   constructor(
     private _trainingService: TrainingService,
-    private uiService: UIService
+    private store: Store<fromTraining.State>
   ) { }
 
   ngOnInit(): void {
-    this.loadingSubscription = this.uiService.loadingStateChanged.subscribe(isLoading => {
-      this.isLoading = isLoading
-    })
-    this.exerciseSubvscription = this._trainingService.exercisesChanged.subscribe(exercises => {
-      this.excercises = exercises;
-    });
+    this.isLoading$ = this.store.select(fromRoot.getIsLoading);
+    this.excercises$ = this.store.select(fromTraining.getAvailableExercises);
     this.fetchExercises();
   }
 
@@ -39,15 +35,6 @@ export class NewTrainingComponent implements OnInit, OnDestroy {
 
   onStartTraining(form: NgForm) {
     this._trainingService.startExcercise(form.value.exercise);
-  }
-
-  ngOnDestroy() {
-    if (this.exerciseSubvscription) {
-    this.exerciseSubvscription.unsubscribe()
-    }
-    if (this.loadingSubscription) {
-      this.loadingSubscription.unsubscribe();
-    }
   }
 
 }
